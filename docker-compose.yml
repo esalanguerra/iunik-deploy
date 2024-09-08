@@ -1,0 +1,122 @@
+networks:
+  iuniket:
+    driver: bridge
+    name: iuniket
+
+volumes:
+  database-data:
+    driver: local
+
+  portainer-data:
+    driver: local
+
+services:
+  portainer:
+    image: portainer/portainer
+    container_name: portainer
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - ${PORTAINER_PORT}:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
+    networks:
+      - iuniket
+
+  database:
+    image: postgres:12
+    container_name: database
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - database-data:/var/lib/postgresql/data
+      - ./backend/db/project.sql:/docker-entrypoint-initdb.d/init.sql
+    mem_limit: 1g
+    memswap_limit: 1g
+    networks:
+      - iuniket
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    ports:
+      - ${PGADMIN_DEFAULT_PORT}:80
+    env_file:
+      - .env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    networks:
+      - iuniket
+    mem_limit: 1g
+    memswap_limit: 1g
+    depends_on:
+      - database
+
+  proxy:
+    image: nginx:latest
+    container_name: proxy
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - ${PROXY_PORT}:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - iuniket
+    depends_on:
+      - frontend
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - 4000:80
+    environment:
+      VITE_API_URL: ${VITE_API_URL}
+    mem_limit: 1g
+    memswap_limit: 1g  
+    networks:
+      - iuniket
+
+  backend:
+    build: .
+    container_name: backend
+    restart: always
+    env_file:
+      - .env
+    environment:
+      PORT: ${API_PORT}
+      DB_HOST: ${DATABASE_HOST}
+      DB_USER: ${DATABASE_USER}
+      DB_PASS: ${DATABASE_PASSWORD}
+      DB_NAME: ${DATABASE_NAME}
+      DB_PORT: ${DATABASE_PORT}
+      JWT_PASS: ${JWT_PASS}
+      FROM_MAIL: ${FROM_MAIL}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USER: ${MAIL_USER}
+      MAIL_PASS: ${MAIL_PASS}
+      ACCESS_TOKEN: ${ACCESS_TOKEN}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    mem_limit: 1g
+    memswap_limit: 1g
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      - database
+    networks:
+      - iuniket
