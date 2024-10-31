@@ -1,7 +1,7 @@
 networks:
-  iuniket:
+  biodermis-net:
     driver: bridge
-    name: iuniket
+    name: biodermis-net
 
 volumes:
   database-data:
@@ -23,27 +23,25 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer-data:/data
     networks:
-      - iuniket
+      - biodermis-net
+    mem_limit: 512m
+    memswap_limit: 1g
 
   database:
     image: postgres:12
     container_name: database
     restart: always
-    env_file:
-      - .env
-    ports:
-      - 5432:5432
     environment:
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     volumes:
       - database-data:/var/lib/postgresql/data
-      - ./backend/db/project.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/Database.sql:/docker-entrypoint-initdb.d/init.sql
     mem_limit: 1g
     memswap_limit: 1g
     networks:
-      - iuniket
+      - biodermis-net
 
   pgadmin:
     image: dpage/pgadmin4
@@ -57,39 +55,11 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     networks:
-      - iuniket
-    mem_limit: 1g
+      - biodermis-net
+    mem_limit: 512m
     memswap_limit: 1g
     depends_on:
       - database
-
-  proxy:
-    image: nginx:latest
-    container_name: proxy
-    restart: always
-    env_file:
-      - .env
-    ports:
-      - ${PROXY_PORT}:80
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-    networks:
-      - iuniket
-    depends_on:
-      - frontend
-
-  frontend:
-    build: ./frontend
-    container_name: frontend
-    restart: always
-    env_file:
-      - .env
-    environment:
-      VITE_API_URL: ${VITE_API_URL}
-    mem_limit: 1g
-    memswap_limit: 1g  
-    networks:
-      - iuniket
 
   backend:
     build: ./backend
@@ -98,7 +68,7 @@ services:
     env_file:
       - .env
     ports:
-      - 3000:3000
+      - ${API_PORT}:3000
     environment:
       PORT: ${API_PORT}
       DB_HOST: ${DATABASE_HOST}
@@ -121,4 +91,32 @@ services:
     depends_on:
       - database
     networks:
-      - iuniket
+      - biodermis-net
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    env_file:
+      - .env
+    environment:
+      VITE_API_URL: ${VITE_API_URL}
+    mem_limit: 1g
+    memswap_limit: 1g  
+    networks:
+      - biodermis-net
+
+  proxy:
+    image: nginx:latest
+    container_name: proxy
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - ${PROXY_PORT}:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - biodermis-net
+    depends_on:
+      - frontend
