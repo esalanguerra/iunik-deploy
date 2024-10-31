@@ -6,7 +6,6 @@ networks:
 volumes:
   database-data:
     driver: local
-
   portainer-data:
     driver: local
 
@@ -21,7 +20,7 @@ services:
       - ${PORTAINER_PORT}:9000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - portainer-data:/data
+      - ./data/portainer:/data  # Persistência de dados do Portainer
     networks:
       - biodermis-net
     mem_limit: 512m
@@ -36,7 +35,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     volumes:
-      - database-data:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data  # Persistência de dados do banco de dados
       - ./backend/Database.sql:/docker-entrypoint-initdb.d/init.sql
     mem_limit: 1g
     memswap_limit: 1g
@@ -87,7 +86,7 @@ services:
     mem_limit: 1g
     memswap_limit: 1g
     volumes:
-      - ./backend/uploads:/app/uploads
+      - ./backend/uploads:/app/uploads  # Persistência de uploads do backend
     depends_on:
       - database
     networks:
