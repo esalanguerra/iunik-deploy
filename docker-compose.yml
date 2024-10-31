@@ -97,6 +97,8 @@ services:
       context: ./frontend
     container_name: frontend
     restart: always
+    ports:
+      - 8080:80
     env_file:
       - .env
     environment:
