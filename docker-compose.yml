@@ -93,7 +93,8 @@ services:
       - biodermis-net
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
     container_name: frontend
     restart: always
     env_file:
