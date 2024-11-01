@@ -2,7 +2,7 @@
 
 - Endereço Ip: 85.31.61.50
 - Nome de usuáro SSH: root
-- Senha: ubfM*w7hC?[R9*fa[Y6>
+- Senha: x/GvUj|yp!RW]03]Tj7P
 
 # Backup da Pasta de Uploads
 
